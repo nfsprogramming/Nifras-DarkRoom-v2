@@ -38,7 +38,7 @@ export default function Grain() {
     <canvas
       ref={ref}
       aria-hidden
-      className="pointer-events-none fixed inset-0 z-[110] h-full w-full opacity-[0.07] mix-blend-overlay"
+      className="grain-canvas pointer-events-none fixed inset-0 z-[110] h-full w-full mix-blend-overlay"
     />
   );
 }

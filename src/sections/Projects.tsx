@@ -1,180 +1,150 @@
-import { useRef } from "react";
+import { useRef, type MouseEvent as ReactMouseEvent } from "react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { useGSAP } from "@gsap/react";
-import { Github } from "lucide-react";
+import ProjectVisual from "../components/ProjectVisual";
 import Scramble from "../components/Scramble";
 import { projects, type Project } from "../data/content";
 import { useReducedMotion } from "../hooks/useReducedMotion";
-import { useIsMobile } from "../hooks/useIsMobile";
-import { cn } from "../lib/utils";
 
 gsap.registerPlugin(ScrollTrigger, useGSAP);
 
-function sceneGradient(p: Project) {
-  return `radial-gradient(120% 140% at 18% 8%, ${p.accent} 0%, transparent 52%), radial-gradient(110% 130% at 85% 92%, ${p.accent}88 0%, transparent 58%), linear-gradient(160deg, #1a150e 0%, #0c0a08 100%)`;
+interface Props {
+  onOpen: (p: Project, rect: DOMRect | null) => void;
 }
 
-function FilmCard({
-  p,
-  i,
-  vertical,
-}: {
-  p: Project;
-  i: number;
-  vertical: boolean;
-}) {
-  return (
-    <article
-      data-cursor
-      className={cn("group relative shrink-0 select-none", vertical ? "w-full max-w-[560px]" : "w-[min(540px,80vw)]")}
-    >
-      <div className="relative aspect-[16/10] overflow-hidden rounded-sm bg-[#16120d]">
-        <div
-          className="absolute inset-0 transition-transform duration-700 ease-out group-hover:scale-[1.045]"
-          style={{ background: sceneGradient(p) }}
-        />
-        <div className="dev-tint absolute inset-0 bg-[#ff3d2e] opacity-25 mix-blend-color transition-opacity duration-700 group-hover:opacity-0" />
-        <div className="absolute inset-0 bg-black/45 transition-opacity duration-700 group-hover:opacity-0" />
-        <div className="sprockets absolute inset-x-0 top-0 h-5 opacity-60" />
-        <div className="sprockets absolute inset-x-0 bottom-0 h-5 opacity-60" />
-        <span className="absolute right-4 top-7 font-display text-4xl text-[#ece4d4]/25 md:text-5xl">
-          {String(i + 1).padStart(2, "0")}
-        </span>
-        <span className="absolute bottom-7 right-4 font-mono text-[9px] uppercase tracking-[0.25em] text-[#ece4d4]/60">
-          FRAME {String(i + 1).padStart(2, "0")} — HOVER TO DEVELOP
-        </span>
-      </div>
-
-      <div className="mt-5 flex items-start justify-between gap-5">
-        <div>
-          <p className="font-mono text-[10px] uppercase tracking-[0.25em] text-[var(--accent)]">
-            {p.tag} — {p.year}
-          </p>
-          <h3 className="mt-2 font-display text-2xl uppercase md:text-3xl">{p.title}</h3>
-          <p className="mt-1.5 max-w-sm text-sm text-[var(--muted)]">{p.subtitle}</p>
-        </div>
-        <div className="flex shrink-0 gap-3">
-          {p.github && (
-            <a
-              href={p.github}
-              target="_blank"
-              rel="noreferrer"
-              data-cursor
-              aria-label={`${p.title} on GitHub`}
-              className="rounded-full border border-[var(--line)] p-2.5 text-[var(--muted)] transition-colors hover:border-[var(--accent)] hover:text-[var(--fg)]"
-            >
-              <Github className="h-4 w-4" />
-            </a>
-          )}
-        </div>
-      </div>
-
-      <div className="mt-4 flex flex-wrap gap-2">
-        {p.tech.map((t) => (
-          <span
-            key={t}
-            className="rounded-full border border-[var(--line)] px-3 py-1 font-mono text-[10px] uppercase tracking-[0.12em] text-[var(--muted)]"
-          >
-            {t}
-          </span>
-        ))}
-      </div>
-      <p className="mt-4 font-mono text-[11px] uppercase tracking-[0.15em]">
-        ▸ {p.metrics}
-      </p>
-    </article>
-  );
-}
-
-export default function Projects() {
+export default function Projects({ onOpen }: Props) {
   const root = useRef<HTMLElement>(null);
-  const track = useRef<HTMLDivElement>(null);
-  const barRef = useRef<HTMLDivElement>(null);
-  const countRef = useRef<HTMLSpanElement>(null);
   const reduced = useReducedMotion();
-  const isMobile = useIsMobile();
-  const pinned = !reduced && !isMobile;
+
+  const onMove = (e: ReactMouseEvent<HTMLElement>) => {
+    const el = e.currentTarget;
+    const r = el.getBoundingClientRect();
+    const x = (e.clientX - r.left) / r.width - 0.5;
+    const y = (e.clientY - r.top) / r.height - 0.5;
+    el.style.setProperty("--px", x.toFixed(3));
+    el.style.setProperty("--py", y.toFixed(3));
+  };
 
   useGSAP(
     () => {
-      if (!pinned) return;
-      const amount = () =>
-        Math.max(1, (track.current?.scrollWidth ?? 0) - window.innerWidth);
-      gsap.to(track.current, {
-        x: () => -amount(),
-        ease: "none",
-        scrollTrigger: {
-          trigger: root.current,
-          start: "top top",
-          end: () => `+=${amount()}`,
-          pin: true,
-          scrub: 1,
-          anticipatePin: 1,
-          invalidateOnRefresh: true,
-          onUpdate: (self) => {
-            if (barRef.current)
-              barRef.current.style.transform = `scaleX(${self.progress})`;
-            if (countRef.current) {
-              const idx = Math.min(
-                projects.length,
-                Math.floor(self.progress * projects.length) + 1
-              );
-              countRef.current.textContent = String(idx).padStart(2, "0");
-            }
+      if (reduced) return;
+      const panels = gsap.utils.toArray<HTMLElement>("[data-panel]");
+      panels.forEach((panel) => {
+        const q = gsap.utils.selector(panel);
+        const tl = gsap.timeline({
+          scrollTrigger: { trigger: panel, start: "top 72%", once: true },
+        });
+        tl.fromTo(
+          q("[data-visual]"),
+          { clipPath: "inset(0 100% 0 0)" },
+          { clipPath: "inset(0 0% 0 0)", duration: 1, ease: "power4.inOut" }
+        );
+        tl.fromTo(
+          q("[data-ptitle]"),
+          { yPercent: 112 },
+          { yPercent: 0, duration: 0.85, ease: "power4.out" },
+          "+=0.15"
+        );
+        tl.fromTo(
+          q("[data-pmeta]"),
+          { autoAlpha: 0, y: 16 },
+          {
+            autoAlpha: 1,
+            y: 0,
+            duration: 0.55,
+            stagger: 0.06,
+            ease: "power3.out",
           },
-        },
+          "+=0.1"
+        );
       });
     },
-    { dependencies: [pinned] }
+    { scope: root, dependencies: [reduced] }
   );
 
+  const open = (p: Project) => (e: ReactMouseEvent<HTMLElement>) => {
+    const visual = e.currentTarget.querySelector("[data-visual]");
+    onOpen(p, visual ? visual.getBoundingClientRect() : null);
+  };
+
   return (
-    <section
-      ref={root}
-      id="work"
-      data-section-theme="dark"
-      className={cn("relative", pinned ? "h-screen overflow-hidden" : "py-28")}
-    >
-      <div className="pointer-events-none absolute inset-x-0 top-0 z-10 flex items-center justify-between px-5 pt-20 font-mono text-[11px] uppercase tracking-[0.2em] text-[var(--muted)] md:px-10">
-        <Scramble text="[03] — SELECTED WORK" trigger="view" />
-        <div className="flex items-center gap-4">
-          <span>
-            <span ref={countRef}>01</span> / {String(projects.length).padStart(2, "0")}
-          </span>
-          <span className="hidden h-px w-32 bg-[var(--line)] md:block">
-            <div
-              ref={barRef}
-              className="h-full w-full origin-left bg-[var(--accent)]"
-              style={{ transform: "scaleX(0)" }}
-            />
-          </span>
-        </div>
+    <section ref={root} id="work" className="relative py-28 md:py-40">
+      <div className="mb-20 flex items-center justify-between px-5 font-mono text-[11px] uppercase tracking-[0.25em] text-[var(--muted)] md:px-10">
+        <Scramble text="[03] — WORK" trigger="view" />
+        <span className="hidden md:inline">06 SYSTEMS — 2024/26</span>
       </div>
 
-      {pinned ? (
-        <>
-          <div className="flex h-full items-center">
-            <div
-              ref={track}
-              className="flex w-max items-stretch gap-8 px-[6vw] pt-10 md:gap-14"
-            >
-              {projects.map((p, i) => (
-                <FilmCard key={p.id} p={p} i={i} vertical={false} />
-              ))}
+      {projects.map((p, i) => {
+        const rows: [string, string][] = [
+          ["STACK", p.stack.join(" · ")],
+          ["ROLE", p.role],
+          ["STATUS", p.status],
+          ["YEAR", p.year],
+        ];
+        return (
+          <article
+            key={p.id}
+            data-panel
+            data-cursor="open"
+            onMouseMove={onMove}
+            onClick={open(p)}
+            className="group relative flex min-h-[92vh] flex-col justify-center gap-10 border-t border-[var(--line)] px-5 py-20 md:px-10 lg:flex-row lg:items-center lg:gap-16"
+          >
+            <div className="relative z-10 lg:w-[40%]">
+              <p className="font-mono text-[11px] tracking-[0.35em] text-[var(--accent)]">
+                {p.index} /
+              </p>
+              <h3 className="mt-4 overflow-hidden">
+                <span
+                  data-ptitle
+                  className="block font-display text-[clamp(2.4rem,6vw,5.6rem)] uppercase leading-[0.9] will-change-transform"
+                  style={{
+                    transform:
+                      "translate(calc(var(--px, 0) * 12px), calc(var(--py, 0) * 8px))",
+                  }}
+                >
+                  {p.title}
+                </span>
+              </h3>
+              <p className="mt-4 max-w-md font-mono text-[10px] uppercase leading-relaxed tracking-[0.2em] text-[var(--muted)]">
+                {p.subtitle}
+              </p>
+              <div className="mt-8 h-px w-24 origin-left scale-x-0 bg-[var(--accent)] transition-transform duration-500 group-hover:scale-x-100" />
+              <dl className="mt-8">
+                {rows.map(([k, v]) => (
+                  <div
+                    key={k}
+                    data-pmeta
+                    className="flex items-baseline justify-between gap-6 border-t border-[var(--line)] py-2.5"
+                  >
+                    <dt className="shrink-0 font-mono text-[9px] uppercase tracking-[0.3em] text-[var(--muted2)]">
+                      {k}
+                    </dt>
+                    <dd className="text-right font-mono text-[10px] uppercase tracking-[0.12em]">
+                      {v}
+                    </dd>
+                  </div>
+                ))}
+              </dl>
             </div>
-          </div>
-          <p className="pointer-events-none absolute bottom-8 left-1/2 -translate-x-1/2 font-mono text-[10px] uppercase tracking-[0.3em] text-[var(--muted)]">
-            Scroll — film strip
-          </p>
-        </>
-      ) : (
-        <div className="flex flex-col items-center gap-20 px-5 pt-24 md:px-10">
-          {projects.map((p, i) => (
-            <FilmCard key={p.id} p={p} i={i} vertical={true} />
-          ))}
-        </div>
-      )}
+            <div className="vel-skew lg:w-[60%]">
+              <ProjectVisual
+                p={p}
+                className="aspect-[16/10] w-full brightness-90 transition-[filter] duration-500 ease-out group-hover:brightness-110"
+              />
+            </div>
+            {i === projects.length - 1 && (
+              <span
+                aria-hidden
+                className="pointer-events-none absolute bottom-6 right-5 font-mono text-[9px] uppercase tracking-[0.3em] text-[var(--muted2)] md:right-10"
+              >
+                END OF ARCHIVE
+              </span>
+            )}
+          </article>
+        );
+      })}
     </section>
   );
 }

@@ -2,7 +2,6 @@ import { useRef } from "react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { useGSAP } from "@gsap/react";
-import Reveal from "../components/Reveal";
 import Scramble from "../components/Scramble";
 import { profile } from "../data/content";
 import { useReducedMotion } from "../hooks/useReducedMotion";
@@ -11,42 +10,78 @@ gsap.registerPlugin(ScrollTrigger, useGSAP);
 
 export default function About() {
   const root = useRef<HTMLElement>(null);
-  const ghost = useRef<HTMLSpanElement>(null);
   const reduced = useReducedMotion();
 
   useGSAP(
     () => {
-      if (reduced) return;
-      gsap.fromTo(
-        ghost.current,
-        { yPercent: 24 },
-        {
-          yPercent: -24,
+      const words = gsap.utils.toArray<HTMLElement>("[data-word]");
+
+      gsap.utils.toArray<HTMLElement>("[data-count]").forEach((el) => {
+        const raw = el.dataset.count ?? "0";
+        const num = parseInt(raw.replace(/\D/g, ""), 10) || 0;
+        const numStr = String(num);
+        const idx = raw.indexOf(numStr);
+        const prefix = idx > 0 ? raw.slice(0, idx) : "";
+        const suffix = raw.slice(idx + numStr.length);
+        if (reduced) {
+          el.textContent = raw;
+          return;
+        }
+        const state = { v: 0 };
+        gsap.to(state, {
+          v: num,
+          duration: 1.6,
+          ease: "power3.out",
+          scrollTrigger: { trigger: el, start: "top 90%", once: true },
+          onUpdate: () => {
+            el.textContent = prefix + Math.round(state.v) + suffix;
+          },
+        });
+      });
+
+      if (reduced) {
+        gsap.set(words, { xPercent: 0, yPercent: 0 });
+        return;
+      }
+
+      words.forEach((w, i) => {
+        const from = i % 2 === 0 ? -110 : 110;
+        gsap.fromTo(
+          w,
+          { xPercent: from },
+          {
+            xPercent: 0,
+            duration: 1.1,
+            ease: "power4.out",
+            scrollTrigger: { trigger: "[data-statement]", start: "top 78%", once: true },
+          }
+        );
+      });
+
+      const spread = [10, -8, 12];
+      words.forEach((w, i) => {
+        gsap.to(w, {
+          yPercent: spread[i] ?? 0,
           ease: "none",
           scrollTrigger: {
-            trigger: root.current,
-            start: "top bottom",
-            end: "bottom top",
+            trigger: "[data-statement]",
+            start: "top 62%",
+            end: "bottom 22%",
             scrub: 1,
           },
-        }
-      );
-    },
-    { scope: root, dependencies: [reduced] }
-  );
+        });
+      });
 
-  useGSAP(
-    () => {
       gsap.fromTo(
-        "[data-metric]",
-        { y: 44, autoAlpha: 0 },
+        "[data-support] > *",
+        { autoAlpha: 0, y: 30 },
         {
-          y: 0,
           autoAlpha: 1,
+          y: 0,
           duration: 0.9,
           ease: "power3.out",
-          stagger: 0.09,
-          scrollTrigger: { trigger: "[data-metric-grid]", start: "top 85%", once: true },
+          stagger: 0.1,
+          scrollTrigger: { trigger: "[data-support]", start: "top 82%", once: true },
         }
       );
     },
@@ -56,55 +91,64 @@ export default function About() {
   return (
     <section
       ref={root}
-      id="manifesto"
-      data-section-theme="paper"
-      className="relative overflow-hidden px-5 py-28 md:px-10 md:py-40"
+      id="about"
+      className="relative overflow-hidden px-5 py-32 md:px-10 md:py-48"
     >
       <span
-        ref={ghost}
         aria-hidden
-        className="pointer-events-none absolute left-0 top-1/2 -translate-y-1/2 select-none whitespace-nowrap font-display text-[22vw] uppercase leading-none text-[var(--fg)] opacity-[0.05]"
+        className="pointer-events-none absolute left-5 top-8 font-mono text-[9px] uppercase tracking-[0.3em] text-[var(--muted2)] md:left-10"
       >
-        MANIFESTO
+        FIG. 01 — INTENT
+      </span>
+      <span
+        aria-hidden
+        className="pointer-events-none absolute right-5 top-8 hidden font-mono text-[9px] uppercase tracking-[0.3em] text-[var(--muted2)] md:right-10 md:block"
+      >
+        11.0165° N / 76.9558° E
       </span>
 
-      <div className="relative z-10">
-        <div className="mb-12 flex items-center justify-between font-mono text-[11px] uppercase tracking-[0.2em] text-[var(--muted)]">
-          <Scramble text="[01] — MANIFESTO" trigger="view" />
-          <span className="hidden md:inline">WHO DEVELOPS THE MACHINES</span>
-        </div>
+      <div className="mb-24 flex items-center justify-between font-mono text-[11px] uppercase tracking-[0.25em] text-[var(--muted)]">
+        <Scramble text="[01] — ABOUT" trigger="view" />
+        <span className="hidden md:inline">BUILDING SINCE 2018</span>
+      </div>
 
-        <Reveal
-          as="h2"
-          mode="words"
-          className="max-w-5xl font-display text-[clamp(2.1rem,5.5vw,5rem)] uppercase leading-[0.95]"
-        >
-          {profile.manifesto}
-        </Reveal>
+      <h2
+        data-statement
+        className="font-display uppercase leading-[0.9]"
+        aria-label="I build digital systems."
+      >
+        {profile.statement.map((w, i) => (
+          <span key={i} className="block overflow-hidden pb-[0.06em]">
+            <span
+              data-word
+              className="block text-[clamp(3.2rem,12.5vw,11.5rem)] will-change-transform"
+            >
+              {w.endsWith(".") ? (
+                <>
+                  {w.slice(0, -1)}
+                  <span className="text-[var(--accent)]">.</span>
+                </>
+              ) : (
+                w
+              )}
+            </span>
+          </span>
+        ))}
+      </h2>
 
-        <div className="mt-16 grid gap-10 md:grid-cols-2">
-          <p className="max-w-md text-base leading-relaxed text-[var(--muted)]">
-            {profile.bio}
-          </p>
-          <p className="max-w-md font-serif text-xl italic leading-relaxed md:text-2xl">
-            {profile.philosophy}
-          </p>
-        </div>
-
-        <div
-          data-metric-grid
-          className="mt-24 grid grid-cols-2 gap-px bg-[var(--line)] md:grid-cols-4"
-        >
-          {profile.metrics.map((m, i) => (
-            <div key={m.label} data-metric className="bg-[var(--bg)] p-6 md:p-8">
-              <p className="font-mono text-[10px] uppercase tracking-[0.25em] text-[var(--accent)]">
-                {String(i + 1).padStart(2, "0")}
+      <div data-support className="mt-24 grid max-w-5xl gap-12 md:grid-cols-2">
+        <p className="max-w-md text-base leading-relaxed text-[var(--muted)]">
+          {profile.support}
+        </p>
+        <div className="grid grid-cols-2 gap-x-10 gap-y-10">
+          {profile.metrics.map((m) => (
+            <div key={m.label}>
+              <p className="font-display text-4xl md:text-5xl">
+                <span data-count={m.value}>0</span>
               </p>
-              <p className="mt-8 font-display text-4xl md:text-5xl">{m.value}</p>
-              <p className="mt-4 font-mono text-[11px] uppercase tracking-[0.15em]">
+              <p className="mt-3 font-mono text-[9px] uppercase tracking-[0.25em] text-[var(--muted)]">
                 {m.label}
               </p>
-              <p className="mt-2 text-sm text-[var(--muted)]">{m.description}</p>
             </div>
           ))}
         </div>

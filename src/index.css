@@ -3,24 +3,19 @@
 @tailwind utilities;
 
 :root {
+  --bg: #050505;
+  --bg2: #080808;
+  --bg3: #0a0a0a;
+  --fg: #f5f5f5;
+  --muted: #8a8a8a;
+  --muted2: #4a4a4a;
+  --line: rgba(245, 245, 245, 0.12);
+  --accent: #b6ff2e;
+  --vel: 0;
+  --vel-abs: 0;
+  --mx: 50vw;
+  --my: 50vh;
   color-scheme: dark;
-}
-
-body[data-theme="dark"] {
-  --bg: #0c0a08;
-  --fg: #ece4d4;
-  --muted: #8f8778;
-  --line: rgba(236, 228, 212, 0.14);
-  --accent: #ff3d2e;
-}
-
-body[data-theme="paper"] {
-  --bg: #ece4d4;
-  --fg: #14110c;
-  --muted: #6f6553;
-  --line: rgba(20, 17, 12, 0.18);
-  --accent: #e03a1f;
-  color-scheme: light;
 }
 
 html,
@@ -32,13 +27,12 @@ body {
   background-color: var(--bg);
   color: var(--fg);
   font-family: "Space Grotesk", ui-sans-serif, system-ui, sans-serif;
-  transition: background-color 0.7s ease, color 0.7s ease;
   -webkit-font-smoothing: antialiased;
 }
 
 ::selection {
   background: var(--accent);
-  color: #0c0a08;
+  color: #050505;
 }
 
 ::-webkit-scrollbar {
@@ -51,6 +45,11 @@ body {
   background: var(--accent);
 }
 
+:focus-visible {
+  outline: 1px solid var(--accent);
+  outline-offset: 3px;
+}
+
 @media (pointer: fine) {
   body,
   body a,
@@ -59,68 +58,235 @@ body {
   }
 }
 
-.safelight {
+.spotlight {
+  position: fixed;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
   background: radial-gradient(
-      700px circle at var(--mx, 70%) var(--my, 20%),
-      rgba(255, 61, 46, 0.15),
-      transparent 65%
-    ),
-    radial-gradient(
-      1100px circle at 88% -12%,
-      rgba(255, 61, 46, 0.09),
-      transparent 60%
-    );
-}
-
-.marquee {
-  mask-image: linear-gradient(90deg, transparent, #000 10%, #000 90%, transparent);
-  -webkit-mask-image: linear-gradient(
-    90deg,
-    transparent,
-    #000 10%,
-    #000 90%,
-    transparent
+    420px circle at var(--mx) var(--my),
+    rgba(245, 245, 245, 0.05),
+    transparent 70%
   );
 }
-.marquee-track {
-  animation: marquee var(--marquee-duration, 24s) linear infinite;
+
+.scanlines {
+  position: fixed;
+  inset: 0;
+  z-index: 108;
+  pointer-events: none;
+  opacity: 0.35;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent 0 2px,
+    rgba(0, 0, 0, 0.22) 2px 3px
+  );
 }
-.marquee-reverse {
-  animation-direction: reverse;
+
+.grain-canvas {
+  opacity: 0.05;
 }
-@keyframes marquee {
-  to {
-    transform: translateX(-50%);
+@media (max-width: 1023px) {
+  .grain-canvas {
+    opacity: 0.03;
   }
 }
 
-.sprockets {
-  background-image: radial-gradient(
-    circle,
-    rgba(236, 228, 212, 0.28) 2.5px,
-    transparent 3px
-  );
-  background-size: 16px 100%;
-  background-repeat: repeat-x;
-  background-position: center;
+.u-link {
+  background-image: linear-gradient(var(--accent), var(--accent));
+  background-repeat: no-repeat;
+  background-position: 0 100%;
+  background-size: 0% 1px;
+  padding-bottom: 2px;
+  transition: background-size 0.4s cubic-bezier(0.65, 0, 0.35, 1);
+}
+.u-link:hover,
+.u-link:focus-visible {
+  background-size: 100% 1px;
 }
 
-@keyframes hint {
+.outline-text {
+  color: transparent;
+  -webkit-text-stroke: 1px rgba(245, 245, 245, 0.3);
+}
+
+.rgb-split {
+  text-shadow:
+    -3px 0 rgba(255, 46, 46, 0.8),
+    3px 0 rgba(182, 255, 46, 0.8);
+}
+
+.glitch-burst {
+  position: relative;
+}
+.glitch-burst::before,
+.glitch-burst::after {
+  content: attr(data-text);
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0;
+  mix-blend-mode: screen;
+  white-space: nowrap;
+}
+.glitch-burst::before {
+  color: #ff2e2e;
+  animation: gA 0.32s steps(2, end) both;
+}
+.glitch-burst::after {
+  color: var(--accent);
+  animation: gB 0.32s steps(2, end) both;
+}
+@keyframes gA {
   0% {
-    transform: translateX(-110%);
+    opacity: 0.85;
+    transform: translate(-6px, 2px);
+    clip-path: inset(0 0 62% 0);
   }
-  60%,
+  35% {
+    opacity: 0.85;
+    transform: translate(5px, -2px);
+    clip-path: inset(38% 0 32% 0);
+  }
+  70% {
+    opacity: 0.85;
+    transform: translate(-3px, 1px);
+    clip-path: inset(70% 0 4% 0);
+  }
   100% {
-    transform: translateX(340%);
+    opacity: 0;
+    transform: none;
+    clip-path: inset(50% 0 50% 0);
   }
 }
-.scroll-hint {
-  animation: hint 1.9s cubic-bezier(0.65, 0, 0.35, 1) infinite;
+@keyframes gB {
+  0% {
+    opacity: 0.85;
+    transform: translate(5px, -1px);
+    clip-path: inset(56% 0 8% 0);
+  }
+  35% {
+    opacity: 0.85;
+    transform: translate(-4px, 2px);
+    clip-path: inset(10% 0 72% 0);
+  }
+  70% {
+    opacity: 0.85;
+    transform: translate(3px, -2px);
+    clip-path: inset(34% 0 46% 0);
+  }
+  100% {
+    opacity: 0;
+    transform: none;
+    clip-path: inset(50% 0 50% 0);
+  }
+}
+
+.scan-x {
+  animation: scanx 0.42s steps(3, end) infinite;
+}
+@keyframes scanx {
+  0% {
+    transform: translateX(0);
+    clip-path: inset(0 0 0 0);
+  }
+  33% {
+    transform: translateX(-9px);
+    clip-path: inset(16% 0 28% 0);
+  }
+  66% {
+    transform: translateX(7px);
+    clip-path: inset(52% 0 10% 0);
+  }
+  100% {
+    transform: translateX(0);
+    clip-path: inset(0 0 0 0);
+  }
+}
+
+.frag {
+  animation: frag 0.24s steps(2, end) infinite;
+}
+@keyframes frag {
+  0% {
+    transform: translate(0, 0);
+  }
+  25% {
+    transform: translate(-3px, 1px) skewX(4deg);
+  }
+  50% {
+    transform: translate(2px, -2px) skewX(-3deg);
+  }
+  75% {
+    transform: translate(-1px, 2px) skewX(2deg);
+  }
+  100% {
+    transform: translate(0, 0);
+  }
+}
+
+.stretch-line {
+  animation: stretch 1.7s cubic-bezier(0.65, 0, 0.35, 1) infinite;
+}
+@keyframes stretch {
+  0% {
+    transform: scaleY(0);
+    transform-origin: top;
+  }
+  45% {
+    transform: scaleY(1);
+    transform-origin: top;
+  }
+  55% {
+    transform: scaleY(1);
+    transform-origin: bottom;
+  }
+  100% {
+    transform: scaleY(0);
+    transform-origin: bottom;
+  }
+}
+
+.wall-item {
+  transition:
+    filter 0.35s ease,
+    opacity 0.35s ease,
+    color 0.35s ease;
+}
+.wall:hover .wall-item {
+  filter: blur(2px);
+  opacity: 0.28;
+}
+.wall .wall-item:hover {
+  filter: blur(0);
+  opacity: 1;
+  color: var(--accent);
+}
+
+.vel-stretch {
+  transform: scaleX(calc(1 + var(--vel-abs) * 0.05));
+  transform-origin: left center;
+}
+.vel-skew {
+  transform: skewX(calc(var(--vel) * 1.5deg));
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .marquee-track,
-  .scroll-hint {
+  .scanlines {
+    display: none;
+  }
+  .scan-x,
+  .frag,
+  .stretch-line {
     animation: none;
+  }
+  .glitch-burst::before,
+  .glitch-burst::after {
+    animation: none;
+    opacity: 0;
+  }
+  .vel-stretch,
+  .vel-skew {
+    transform: none;
   }
 }

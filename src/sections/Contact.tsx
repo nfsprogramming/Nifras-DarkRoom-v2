@@ -1,133 +1,160 @@
-import { useState } from "react";
-import { ArrowUp, ArrowUpRight, Check, Copy, Github, Linkedin, Send } from "lucide-react";
+import { useRef } from "react";
+import gsap from "gsap";
+import { ScrollTrigger } from "gsap/ScrollTrigger";
+import { useGSAP } from "@gsap/react";
 import Magnetic from "../components/Magnetic";
-import Marquee from "../components/Marquee";
-import Reveal from "../components/Reveal";
 import Scramble from "../components/Scramble";
 import { profile } from "../data/content";
-import { scrollToTarget } from "../lib/scroll";
+import { burst } from "../lib/glitch";
+import { useReducedMotion } from "../hooks/useReducedMotion";
+
+gsap.registerPlugin(ScrollTrigger, useGSAP);
 
 export default function Contact() {
-  const [copied, setCopied] = useState(false);
+  const root = useRef<HTMLElement>(null);
+  const titleRef = useRef<HTMLDivElement>(null);
+  const reduced = useReducedMotion();
 
-  const copy = async () => {
-    try {
-      await navigator.clipboard.writeText(profile.socials.email);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    } catch {
-      setCopied(false);
-    }
-  };
+  useGSAP(
+    () => {
+      if (reduced) return;
+      gsap.fromTo(
+        "[data-c-line]",
+        { yPercent: 115 },
+        {
+          yPercent: 0,
+          duration: 0.75,
+          ease: "power4.out",
+          stagger: 0.08,
+          scrollTrigger: { trigger: "[data-c-title]", start: "top 78%", once: true },
+          onStart: () => burst(titleRef.current),
+        }
+      );
+      gsap.fromTo(
+        "[data-c-fade]",
+        { autoAlpha: 0, y: 20 },
+        {
+          autoAlpha: 1,
+          y: 0,
+          duration: 0.7,
+          ease: "power3.out",
+          stagger: 0.1,
+          scrollTrigger: { trigger: "[data-c-cta]", start: "top 82%", once: true },
+        }
+      );
+    },
+    { scope: root, dependencies: [reduced] }
+  );
 
   return (
     <section
+      ref={root}
       id="contact"
-      data-section-theme="dark"
-      className="relative flex min-h-screen flex-col justify-between overflow-hidden px-5 pb-6 pt-28 md:px-10"
+      className="relative flex min-h-screen flex-col justify-between px-5 pt-32 md:px-10 md:pt-44"
     >
-      <div className="flex items-center justify-between font-mono text-[11px] uppercase tracking-[0.2em] text-[var(--muted)]">
-        <Scramble text="[04] — CONTACT" trigger="view" />
-        <span className="hidden md:inline">DARKROOM OPEN — REPLIES WITHIN 24H</span>
-      </div>
+      <div>
+        <div className="mb-20 flex items-center justify-between font-mono text-[11px] uppercase tracking-[0.25em] text-[var(--muted)]">
+          <Scramble text="[04] — CONTACT" trigger="view" />
+          <span className="hidden md:inline">FINAL FRAME</span>
+        </div>
 
-      <div className="py-16">
-        <p className="mb-6 font-mono text-xs uppercase tracking-[0.3em] text-[var(--accent)]">
-          Have a negative worth developing?
-        </p>
-        <Reveal
-          as="h2"
-          mode="chars"
-          className="font-display text-[clamp(3rem,11vw,10rem)] uppercase leading-[0.9]"
-        >
-          LET'S TALK
-        </Reveal>
-        <p className="mt-5 font-serif text-[clamp(1.4rem,3.5vw,2.8rem)] italic text-[var(--accent)]">
-          something intelligent together.
-        </p>
+        <div data-c-title ref={titleRef}>
+          <p className="overflow-hidden">
+            <span data-c-line className="block font-display text-[clamp(3.4rem,11vw,10rem)] uppercase leading-[0.92]">
+              LET'S BUILD
+            </span>
+          </p>
+          <p className="overflow-hidden">
+            <span data-c-line className="block font-display text-[clamp(3.4rem,11vw,10rem)] uppercase leading-[0.92]">
+              SOMETHING{" "}
+              <span className="font-serif normal-case italic text-[var(--accent)]">
+                strange.
+              </span>
+            </span>
+          </p>
+        </div>
 
-        <div className="mt-12 flex flex-wrap items-center gap-7">
-          <Magnetic>
+        <div data-c-cta className="mt-16 flex flex-wrap items-center gap-10">
+          <Magnetic strength={0.25}>
             <a
-              href={`mailto:${profile.socials.email}`}
-              data-cursor
-              className="inline-flex items-center gap-3 rounded-full bg-[var(--accent)] px-8 py-4 font-mono text-xs uppercase tracking-[0.2em] text-[#0c0a08] transition-transform duration-300 hover:scale-[1.04]"
+              href={`mailto:${profile.email}`}
+              data-cursor="cta"
+              className="group relative inline-block select-none"
             >
-              Say hello
-              <ArrowUpRight className="h-4 w-4" />
+              <span className="absolute inset-0 origin-bottom scale-y-0 bg-[var(--accent)] transition-transform duration-500 ease-[cubic-bezier(0.65,0,0.35,1)] group-hover:scale-y-100" />
+              <span className="relative flex items-center gap-5 px-5 py-3 font-display text-[clamp(2.4rem,8vw,7rem)] uppercase leading-none transition-colors duration-300 group-hover:text-[#050505]">
+                GET IN TOUCH
+                <span className="inline-block transition-transform duration-500 group-hover:rotate-45">
+                  ↗
+                </span>
+              </span>
             </a>
           </Magnetic>
-          <button
-            onClick={copy}
-            data-cursor
-            className="group inline-flex items-center gap-3 border-b border-[var(--line)] pb-1.5 font-mono text-xs uppercase tracking-[0.15em] text-[var(--muted)] transition-colors hover:text-[var(--fg)]"
+        </div>
+
+        <div
+          data-c-fade
+          className="mt-14 flex flex-wrap items-center gap-x-12 gap-y-4 font-mono text-[10px] uppercase tracking-[0.25em] text-[var(--muted)]"
+        >
+          <span>Open for freelance & full-time</span>
+          <a
+            href={`mailto:${profile.email}`}
+            data-cursor="link"
+            className="u-link"
           >
-            {profile.socials.email}
-            {copied ? (
-              <Check className="h-3.5 w-3.5 text-[var(--accent)]" />
-            ) : (
-              <Copy className="h-3.5 w-3.5 opacity-60 transition-opacity group-hover:opacity-100" />
-            )}
-          </button>
+            {profile.email}
+          </a>
         </div>
       </div>
 
-      <div>
-        <Marquee
-          items={[
-            "Available for high-impact AI systems",
-            "Edge Intelligence",
-            "Full-Stack Architecture",
-            "Open Source",
-          ]}
-          className="border-y border-[var(--line)] py-4 font-display text-xl uppercase md:text-2xl"
-        />
-        <div className="mt-6 flex flex-wrap items-center justify-between gap-6 font-mono text-[11px] uppercase tracking-[0.2em] text-[var(--muted)]">
-          <div className="flex gap-6">
+      <footer className="mt-28 border-t border-[var(--line)] pb-8 pt-8">
+        <div className="flex flex-wrap items-center justify-between gap-x-10 gap-y-6 font-mono text-[10px] uppercase tracking-[0.25em]">
+          <div>
+            <p className="text-[var(--fg)]">NFS® — {profile.name}</p>
+            <p className="mt-2 text-[var(--muted2)]">{profile.location}</p>
+          </div>
+          <div className="flex gap-8">
             <a
               href={profile.socials.github}
               target="_blank"
               rel="noreferrer"
-              data-cursor
-              className="inline-flex items-center gap-2 transition-colors hover:text-[var(--fg)]"
+              data-cursor="link"
+              className="u-link"
             >
-              <Github className="h-3.5 w-3.5" />
               GitHub
             </a>
             <a
               href={profile.socials.linkedin}
               target="_blank"
               rel="noreferrer"
-              data-cursor
-              className="inline-flex items-center gap-2 transition-colors hover:text-[var(--fg)]"
+              data-cursor="link"
+              className="u-link"
             >
-              <Linkedin className="h-3.5 w-3.5" />
               LinkedIn
             </a>
-            {profile.socials.telegram && (
-              <a
-                href={profile.socials.telegram}
-                target="_blank"
-                rel="noreferrer"
-                data-cursor
-                className="inline-flex items-center gap-2 transition-colors hover:text-[var(--fg)]"
-              >
-                <Send className="h-3.5 w-3.5" />
-                Telegram
-              </a>
-            )}
+            <a
+              href={profile.socials.portfolio}
+              target="_blank"
+              rel="noreferrer"
+              data-cursor="link"
+              className="u-link"
+            >
+              Portfolio
+            </a>
           </div>
-          <p>© 2026 {profile.brand} — built in the dark</p>
-          <button
-            onClick={() => scrollToTarget(0)}
-            data-cursor
-            className="inline-flex items-center gap-2 transition-colors hover:text-[var(--fg)]"
-          >
-            Back to top
-            <ArrowUp className="h-3.5 w-3.5" />
-          </button>
+          <p className="text-[var(--muted2)]">© 2026 — DARK ROOM V2</p>
         </div>
-      </div>
+        <div className="mt-8 flex items-center justify-between font-mono text-[9px] uppercase tracking-[0.25em] text-[var(--muted2)]">
+          <span className="flex items-center gap-2">
+            <span className="relative flex h-1.5 w-1.5">
+              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[var(--accent)] opacity-60" />
+              <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-[var(--accent)]" />
+            </span>
+            SYSTEM ONLINE — ALL SYSTEMS NOMINAL
+          </span>
+          <span>NFS / 2026</span>
+        </div>
+      </footer>
     </section>
   );
 }
