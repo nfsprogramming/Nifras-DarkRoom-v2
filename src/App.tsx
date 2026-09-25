@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { lazy, Suspense, useEffect, useRef, useState } from "react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { useGSAP } from "@gsap/react";
@@ -6,22 +6,49 @@ import Lenis from "lenis";
 import Cursor from "./components/Cursor";
 import Grain from "./components/Grain";
 import Spotlight from "./components/Spotlight";
+import Atmosphere from "./components/Atmosphere";
+import ChapterCard from "./components/ChapterCard";
 import ScrollProgress from "./components/ScrollProgress";
+import ScrollHUD from "./components/ScrollHUD";
 import Preloader from "./components/Preloader";
 import Nav from "./components/Nav";
-import MenuOverlay from "./components/MenuOverlay";
 import Marquee from "./components/Marquee";
-import ProjectTransition from "./components/ProjectTransition";
-import ProjectOverlay from "./components/ProjectOverlay";
+import type { LightboxItem } from "./components/Lightbox";
 import Hero from "./sections/Hero";
-import About from "./sections/About";
-import Stack from "./sections/Stack";
-import Projects from "./sections/Projects";
+import Intro from "./sections/Intro";
+import Story from "./sections/Story";
+import IBuild from "./sections/IBuild";
+import Work from "./sections/Work";
+import CaseStudies from "./sections/CaseStudies";
+import Archive from "./sections/Archive";
+import Process from "./sections/Process";
+import Technology from "./sections/Technology";
+import Failures from "./sections/Failures";
+import Lab from "./sections/Lab";
+import RightNow from "./sections/RightNow";
+import Future from "./sections/Future";
+import ImageWall from "./sections/ImageWall";
+import FinalChapter from "./sections/FinalChapter";
 import Contact from "./sections/Contact";
-import { setLenis, markScroll, getVelocity, scrollToTarget } from "./lib/scroll";
-import { marqueeWords, type Project } from "./data/content";
+import Footer from "./sections/Footer";
+import {
+  setLenis,
+  markScroll,
+  getVelocity,
+  scrollToTarget,
+} from "./lib/scroll";
+import {
+  caseStudyIds,
+  marqueeWords,
+  type Project,
+} from "./data/content";
 import { useReducedMotion } from "./hooks/useReducedMotion";
 import { useIsMobile } from "./hooks/useIsMobile";
+
+const MenuOverlay = lazy(() => import("./components/MenuOverlay"));
+const ProjectOverlay = lazy(() => import("./components/ProjectOverlay"));
+const ProjectTransition = lazy(() => import("./components/ProjectTransition"));
+const Lightbox = lazy(() => import("./components/Lightbox"));
 
 gsap.registerPlugin(ScrollTrigger, useGSAP);
 
@@ -37,6 +64,11 @@ export default function App() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [active, setActive] = useState<Project | null>(null);
   const [transition, setTransition] = useState<TransitionState | null>(null);
+  const [lightbox, setLightbox] = useState<{
+    items: LightboxItem[];
+    index: number;
+    origin?: DOMRect | null;
+  } | null>(null);
   const lenisRef = useRef<Lenis | null>(null);
   const smRef = useRef(0);
   const reduced = useReducedMotion();
@@ -44,6 +76,49 @@ export default function App() {
 
   useEffect(() => {
     window.scrollTo(0, 0);
+  }, []);
+
+  useEffect(() => {
+    const original = document.title;
+    const onVis = () => {
+      document.title = document.hidden
+        ? "COME BACK TO THE ROOM — NFS"
+        : original;
+    };
+    document.addEventListener("visibilitychange", onVis);
+    return () => {
+      document.removeEventListener("visibilitychange", onVis);
+      document.title = original;
+    };
+  }, []);
+
+  useEffect(() => {
+    const warm = () => {
+      void import("./components/MenuOverlay");
+      void import("./components/ProjectOverlay");
+      void import("./components/ProjectTransition");
+      void import("./components/Lightbox");
+    };
+    const id = window.setTimeout(() => {
+      if ("requestIdleCallback" in window) {
+        requestIdleCallback(() => warm());
+      } else {
+        warm();
+      }
+    }, 3000);
+    return () => window.clearTimeout(id);
+  }, []);
+
+  useEffect(() => {
+    const onOver = (e: MouseEvent) => {
+      const el = (e.target as HTMLElement).closest<HTMLElement>(".u-link");
+      if (!el) return;
+      const r = el.getBoundingClientRect();
+      if (e.clientX < r.left + r.width / 2) el.setAttribute("data-dir", "r");
+      else el.removeAttribute("data-dir");
+    };
+    document.addEventListener("mouseover", onOver);
+    return () => document.removeEventListener("mouseover", onOver);
   }, []);
 
   useGSAP(() => {
@@ -82,23 +157,31 @@ export default function App() {
     () => {
       const lenis = lenisRef.current;
       if (!lenis) return;
-      if (phase === "loading" || menuOpen || active) {
+      if (phase === "loading" || menuOpen || active || lightbox) {
         lenis.stop();
       } else {
         lenis.start();
         requestAnimationFrame(() => ScrollTrigger.refresh());
       }
     },
-    { dependencies: [phase, menuOpen, active] }
+    { dependencies: [phase, menuOpen, active, lightbox] }
   );
 
   const openProject = (p: Project, rect: DOMRect | null) => {
     if (menuOpen) setMenuOpen(false);
+    if (caseStudyIds.includes(p.id)) {
+      scrollToTarget(`#story-${p.id}`);
+      return;
+    }
     if (!rect) {
       setActive(p);
       return;
     }
     setTransition({ p, rect });
+  };
+
+  const openLightbox = (items: LightboxItem[], index: number, origin?: DOMRect) => {
+    setLightbox({ items, index, origin });
   };
 
   const handleMenuSelect = (href: string) => {
@@ -108,11 +191,21 @@ export default function App() {
 
   return (
     <div className="relative min-h-screen">
+      <a
+        href="#content"
+        className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[200] focus:bg-[var(--accent)] focus:px-4 focus:py-2 focus:font-mono focus:text-[11px] focus:uppercase focus:tracking-[0.2em] focus:text-[#050505]"
+      >
+        Skip to content
+      </a>
+      <Atmosphere />
       <Spotlight />
+      <div className="vignette" aria-hidden />
       <Cursor />
       <Grain />
       <div className="scanlines" aria-hidden />
       <ScrollProgress />
+      <ScrollHUD />
+      <ChapterCard />
       {phase !== "ready" && (
         <Preloader
           onReveal={() => setPhase("reveal")}
@@ -120,36 +213,67 @@ export default function App() {
         />
       )}
       <Nav menuOpen={menuOpen} onToggleMenu={() => setMenuOpen((v) => !v)} />
-      <MenuOverlay
-        open={menuOpen}
-        onClose={() => setMenuOpen(false)}
-        onSelect={handleMenuSelect}
-      />
+      {menuOpen && (
+        <Suspense fallback={null}>
+          <MenuOverlay
+            open={menuOpen}
+            onClose={() => setMenuOpen(false)}
+            onSelect={handleMenuSelect}
+          />
+        </Suspense>
+      )}
 
-      <main className="relative z-[2]">
+      <main id="content" className="relative z-[2]">
         <Hero active={phase !== "loading"} />
-        <About />
-        <Stack />
-        <Projects onOpen={openProject} />
+        <Intro />
+        <Story />
+        <IBuild />
+        <Work onOpen={openProject} />
         <Marquee words={marqueeWords} className="font-display uppercase" />
+        <CaseStudies onImage={openLightbox} />
+        <Archive onOpen={openProject} />
+        <Process />
+        <Technology />
+        <Failures />
+        <Lab />
+        <RightNow />
+        <Future />
+        <ImageWall onImage={openLightbox} />
+        <FinalChapter />
         <Contact />
+        <Footer />
       </main>
 
       {transition && (
-        <ProjectTransition
-          p={transition.p}
-          rect={transition.rect}
-          onDone={(p) => setActive(p)}
-          onGone={() => setTransition(null)}
-        />
+        <Suspense fallback={null}>
+          <ProjectTransition
+            p={transition.p}
+            rect={transition.rect}
+            onDone={(p) => setActive(p)}
+            onGone={() => setTransition(null)}
+          />
+        </Suspense>
       )}
       {active && (
-        <ProjectOverlay
-          key={active.id}
-          project={active}
-          onClose={() => setActive(null)}
-          onOpen={openProject}
-        />
+        <Suspense fallback={null}>
+          <ProjectOverlay
+            key={active.id}
+            project={active}
+            onClose={() => setActive(null)}
+            onOpen={openProject}
+          />
+        </Suspense>
+      )}
+      {lightbox && (
+        <Suspense fallback={null}>
+          <Lightbox
+            items={lightbox.items}
+            index={lightbox.index}
+            origin={lightbox.origin}
+            onClose={() => setLightbox(null)}
+            onIndex={(i) => setLightbox((s) => (s ? { ...s, index: i } : s))}
+          />
+        </Suspense>
       )}
     </div>
   );

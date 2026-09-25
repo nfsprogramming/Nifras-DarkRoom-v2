@@ -3,6 +3,7 @@ import { useReducedMotion } from "../hooks/useReducedMotion";
 
 const W = 160;
 const H = 90;
+const TILES = 4;
 
 export default function Grain() {
   const ref = useRef<HTMLCanvasElement>(null);
@@ -15,19 +16,27 @@ export default function Grain() {
     canvas.height = H;
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
-    const img = ctx.createImageData(W, H);
-    const buf = new Uint32Array(img.data.buffer);
-    let raf = 0;
-    let last = 0;
-    const draw = (t: number) => {
-      raf = requestAnimationFrame(draw);
-      if (t - last < 70) return;
-      last = t;
+
+    const tiles: ImageData[] = [];
+    for (let t = 0; t < TILES; t++) {
+      const img = ctx.createImageData(W, H);
+      const buf = new Uint32Array(img.data.buffer);
       for (let i = 0; i < buf.length; i++) {
         const v = (Math.random() * 255) | 0;
         buf[i] = (255 << 24) | (v << 16) | (v << 8) | v;
       }
-      ctx.putImageData(img, 0, 0);
+      tiles.push(img);
+    }
+
+    let raf = 0;
+    let last = 0;
+    let idx = 0;
+    const draw = (t: number) => {
+      raf = requestAnimationFrame(draw);
+      if (t - last < 90) return;
+      last = t;
+      ctx.putImageData(tiles[idx % TILES], 0, 0);
+      idx += 1;
       if (reduced) cancelAnimationFrame(raf);
     };
     raf = requestAnimationFrame(draw);

@@ -13,6 +13,12 @@ interface Props {
   onOpen: (p: Project, rect: DOMRect | null) => void;
 }
 
+const STORY: [string, keyof Project][] = [
+  ["CHALLENGE", "challenge"],
+  ["SOLUTION", "solution"],
+  ["RESULT", "result"],
+];
+
 export default function ProjectOverlay({ project, onClose, onOpen }: Props) {
   const root = useRef<HTMLDivElement>(null);
   const titleRef = useRef<HTMLHeadingElement>(null);
@@ -37,7 +43,7 @@ export default function ProjectOverlay({ project, onClose, onOpen }: Props) {
           y: 0,
           duration: 0.7,
           ease: "power3.out",
-          stagger: 0.08,
+          stagger: 0.07,
         },
         "-=0.5"
       );
@@ -62,7 +68,7 @@ export default function ProjectOverlay({ project, onClose, onOpen }: Props) {
     return () => window.removeEventListener("keydown", onKey);
   }, [onClose]);
 
-  const rows: [string, string][] = [
+  const meta: [string, string][] = [
     ["ROLE", project.role],
     ["STATUS", project.status],
     ["YEAR", project.year],
@@ -97,7 +103,7 @@ export default function ProjectOverlay({ project, onClose, onOpen }: Props) {
           <h2
             ref={titleRef}
             data-o-title
-            className="block font-display text-[clamp(2.8rem,9vw,9rem)] uppercase leading-[0.9] will-change-transform"
+            className="block font-display text-[clamp(2.6rem,8vw,8rem)] uppercase leading-[0.9] will-change-transform"
           >
             {project.title}
           </h2>
@@ -113,12 +119,15 @@ export default function ProjectOverlay({ project, onClose, onOpen }: Props) {
           <ProjectVisual p={project} className="aspect-[16/10] w-full" />
         </div>
 
-        <div className="mt-16 grid gap-12 md:grid-cols-3">
-          <p data-o-fade className="text-base leading-relaxed text-[var(--muted)] md:col-span-2">
+        <div className="mt-20 grid gap-10 md:grid-cols-3">
+          <p
+            data-o-fade
+            className="text-base leading-relaxed text-[var(--muted)] md:col-span-2"
+          >
             {project.summary}
           </p>
           <dl data-o-fade>
-            {rows.map(([k, v]) => (
+            {meta.map(([k, v]) => (
               <div
                 key={k}
                 className="flex items-baseline justify-between gap-6 border-t border-[var(--line)] py-2.5"
@@ -134,6 +143,27 @@ export default function ProjectOverlay({ project, onClose, onOpen }: Props) {
           </dl>
         </div>
 
+        <div className="mt-24 space-y-0">
+          {STORY.map(([label, key]) => (
+            <div
+              key={label}
+              data-o-fade
+              className="grid gap-4 border-t border-[var(--line)] py-10 md:grid-cols-[200px_1fr] md:gap-12"
+            >
+              <p className="font-mono text-[10px] uppercase tracking-[0.35em] text-[var(--accent)]">
+                {label}
+              </p>
+              <p className="max-w-2xl text-base leading-relaxed md:text-lg">
+                {project[key] as string}
+              </p>
+            </div>
+          ))}
+        </div>
+
+        <div data-o-fade className="vel-skew mt-24">
+          <ProjectVisual p={project} className="aspect-[21/9] w-full" />
+        </div>
+
         {project.github && (
           <a
             data-o-fade
@@ -141,7 +171,7 @@ export default function ProjectOverlay({ project, onClose, onOpen }: Props) {
             href={project.github}
             target="_blank"
             rel="noreferrer"
-            className="u-link mt-16 inline-block font-mono text-[11px] uppercase tracking-[0.3em]"
+            className="u-link mt-20 inline-block font-mono text-[11px] uppercase tracking-[0.3em]"
           >
             VIEW SOURCE ↗
           </a>
@@ -151,19 +181,19 @@ export default function ProjectOverlay({ project, onClose, onOpen }: Props) {
           data-o-fade
           data-cursor
           onClick={() => onOpen(next, null)}
-          className="group mt-24 flex w-full items-center justify-between gap-6 border-t border-[var(--line)] pt-8 text-left"
+          className="group mt-28 flex w-full items-center justify-between gap-6 border-t border-[var(--line)] pt-10 text-left"
         >
           <span className="font-mono text-[10px] uppercase tracking-[0.3em] text-[var(--muted)]">
             NEXT SYSTEM
           </span>
-          <span className="text-right font-display text-[clamp(1.6rem,4.5vw,4rem)] uppercase leading-none transition-colors duration-300 group-hover:text-[var(--accent)]">
+          <span className="text-right font-display text-[clamp(1.5rem,4vw,3.5rem)] uppercase leading-none transition-colors duration-300 group-hover:text-[var(--accent)]">
             {next.title} ↗
           </span>
         </button>
 
         <p
           data-o-fade
-          className="mt-16 text-center font-mono text-[9px] uppercase tracking-[0.3em] text-[var(--muted2)]"
+          className="mt-20 text-center font-mono text-[9px] uppercase tracking-[0.3em] text-[var(--muted2)]"
         >
           {profile.brand} — DARK ROOM / ARCHIVE {project.index}
         </p>

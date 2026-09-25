@@ -2,7 +2,6 @@ import { useEffect, useRef } from "react";
 import { cn } from "../lib/utils";
 import { getDirection, getVelocity } from "../lib/scroll";
 import { useReducedMotion } from "../hooks/useReducedMotion";
-
 const COPIES = 3;
 
 interface Props {
@@ -42,7 +41,8 @@ export default function Marquee({ words, className, speed = 90 }: Props) {
       const w = tr.scrollWidth / COPIES;
       if (w > 0) {
         const p = ((pos.current % w) + w) % w;
-        tr.style.transform = `translate3d(${-p}px,0,0)`;
+        const skew = Math.max(-4, Math.min(4, getVelocity() / 60));
+        tr.style.transform = `translate3d(${-p}px,0,0) skewX(${skew}deg)`;
       }
     };
     raf = requestAnimationFrame(loop);
@@ -54,9 +54,9 @@ export default function Marquee({ words, className, speed = 90 }: Props) {
 
   const row = (hidden: boolean) => (
     <div aria-hidden={hidden || undefined} className="flex shrink-0 items-center">
-      {words.map((w) => (
+      {words.map((w, i) => (
         <span key={w} className="flex items-center whitespace-nowrap">
-          <span className="px-8">{w}</span>
+          <span className={cn("px-8", i % 2 === 1 && "outline-text")}>{w}</span>
           <span className="text-[var(--accent)]">—</span>
         </span>
       ))}

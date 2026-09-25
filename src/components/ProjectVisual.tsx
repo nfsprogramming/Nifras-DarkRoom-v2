@@ -23,12 +23,8 @@ export default function ProjectVisual({ p, className }: Props) {
       )}
     >
       <div
-        className="absolute inset-[-6%] transition-transform duration-300 ease-out"
-        style={{
-          background: visualGradient(p),
-          transform:
-            "translate(calc(var(--px, 0) * 16px), calc(var(--py, 0) * 12px)) scale(var(--s, 1))",
-        }}
+        className="pv-idle absolute inset-[-8%] will-change-transform"
+        style={{ background: visualGradient(p) }}
       />
       <div
         className="absolute inset-[-6%] opacity-0 mix-blend-screen transition-opacity duration-500 group-hover:opacity-40"
@@ -48,11 +44,13 @@ export default function ProjectVisual({ p, className }: Props) {
         }}
       />
       <div
-        className="absolute inset-0 opacity-[0.13]"
+        className="absolute inset-[-6%] transition-transform duration-300 ease-out"
         style={{
           backgroundImage:
             "linear-gradient(rgba(245,245,245,0.5) 1px, transparent 1px), linear-gradient(90deg, rgba(245,245,245,0.5) 1px, transparent 1px)",
           backgroundSize: "44px 44px",
+          transform:
+            "translate(calc(var(--px, 0) * 16px), calc(var(--py, 0) * 12px)) scale(var(--s, 1))",
         }}
       />
       <span

@@ -2,6 +2,7 @@ import { useEffect, useRef } from "react";
 import gsap from "gsap";
 import { useGSAP } from "@gsap/react";
 import { MENU_LINKS } from "./Nav";
+import SplitWave from "./SplitWave";
 import { profile } from "../data/content";
 import { burst } from "../lib/glitch";
 
@@ -83,12 +84,13 @@ export default function MenuOverlay({ open, onClose, onSelect }: Props) {
         MENU
       </span>
 
-      <ul className="relative z-10 space-y-2 md:space-y-4">
+      <ul className="menu-list relative z-10 space-y-2 md:space-y-4">
         {MENU_LINKS.map((l) => (
           <li key={l.href} className="overflow-hidden">
             <button
               onClick={() => onSelect(l.href)}
               data-cursor
+              aria-label={l.label}
               onMouseEnter={(e) => burst(e.currentTarget.querySelector("[data-item-inner]"))}
               className="group flex w-full items-baseline gap-5 text-left md:gap-8"
             >
@@ -97,7 +99,7 @@ export default function MenuOverlay({ open, onClose, onSelect }: Props) {
                   {l.n}
                 </span>
                 <span className="font-display text-[clamp(3rem,9vw,8rem)] uppercase leading-[0.95] text-[var(--fg)] transition-all duration-500 group-hover:translate-x-5 group-hover:text-[var(--accent)]">
-                  {l.label}
+                  <SplitWave text={l.label} />
                 </span>
               </span>
             </button>
@@ -106,7 +108,9 @@ export default function MenuOverlay({ open, onClose, onSelect }: Props) {
       </ul>
 
       <div className="relative z-10 mt-16 flex flex-wrap items-center justify-between gap-6 font-mono text-[10px] uppercase tracking-[0.25em] text-[var(--muted)]">
-        <span data-menu-meta>{profile.location}</span>
+        <span data-menu-meta className="text-[var(--accent)]">
+          AVAILABLE FOR BUILDING
+        </span>
         <a
           data-menu-meta
           data-cursor="link"
@@ -116,7 +120,7 @@ export default function MenuOverlay({ open, onClose, onSelect }: Props) {
           {profile.email}
         </a>
         <span data-menu-meta className="text-[var(--muted2)]">
-          NFS — DARK ROOM / 2026
+          {profile.location}
         </span>
       </div>
     </div>

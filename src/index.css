@@ -93,16 +93,142 @@ body {
 }
 
 .u-link {
-  background-image: linear-gradient(var(--accent), var(--accent));
-  background-repeat: no-repeat;
-  background-position: 0 100%;
-  background-size: 0% 1px;
+  position: relative;
   padding-bottom: 2px;
-  transition: background-size 0.4s cubic-bezier(0.65, 0, 0.35, 1);
 }
-.u-link:hover,
-.u-link:focus-visible {
-  background-size: 100% 1px;
+.u-link::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 1px;
+  background: var(--accent);
+  transform: scaleX(0);
+  transform-origin: right;
+  transition: transform 0.45s cubic-bezier(0.65, 0, 0.35, 1);
+}
+.u-link:hover::after,
+.u-link:focus-visible::after {
+  transform: scaleX(1);
+}
+.u-link[data-dir="r"]::after {
+  transform-origin: left;
+}
+
+.wave {
+  display: inline-flex;
+}
+.w-ch {
+  display: inline-block;
+  transition: transform 0.35s cubic-bezier(0.22, 1, 0.36, 1);
+  transition-delay: calc(var(--i) * 16ms);
+}
+.wave:hover .w-ch {
+  transform: translateY(-0.14em);
+}
+
+.caret {
+  display: inline-block;
+  width: 0.55em;
+  height: 0.95em;
+  margin-left: 3px;
+  vertical-align: -0.12em;
+  background: var(--accent);
+  animation: caretBlink 0.8s steps(1) infinite;
+}
+@keyframes caretBlink {
+  50% {
+    opacity: 0;
+  }
+}
+
+.float-soft {
+  display: inline-block;
+  animation: floatSoft 5s ease-in-out infinite;
+}
+@keyframes floatSoft {
+  0%,
+  100% {
+    transform: translateY(0) rotate(-1.5deg);
+  }
+  50% {
+    transform: translateY(-0.14em) rotate(1.5deg);
+  }
+}
+
+.pv-idle {
+  animation: pvdrift 24s ease-in-out infinite alternate;
+}
+@keyframes pvdrift {
+  from {
+    transform: scale(1) translate(0, 0);
+  }
+  to {
+    transform: scale(1.08) translate(1.6%, -1.2%);
+  }
+}
+
+.spotlight {
+  animation: breathe 6s ease-in-out infinite;
+}
+@keyframes breathe {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.72;
+  }
+}
+
+.menu-list li {
+  transition:
+    opacity 0.4s ease,
+    transform 0.4s ease;
+}
+.menu-list:has(li:hover) li:not(:hover) {
+  opacity: 0.3;
+  transform: scale(0.985);
+}
+
+.tech-list li {
+  transition: opacity 0.35s ease;
+}
+.tech-list:has(li:hover) li:not(:hover) {
+  opacity: 0.25;
+}
+
+.vignette {
+  position: fixed;
+  inset: 0;
+  z-index: 4;
+  pointer-events: none;
+  background: radial-gradient(
+    120% 120% at 50% 50%,
+    transparent 55%,
+    rgba(0, 0, 0, 0.5) 100%
+  );
+}
+
+.ambient {
+  position: fixed;
+  top: -20%;
+  left: -10%;
+  width: 60%;
+  height: 60%;
+  z-index: 0;
+  pointer-events: none;
+  background: radial-gradient(closest-side, var(--accent), transparent);
+  filter: blur(40px);
+  will-change: transform, opacity;
+}
+
+.work-track article {
+  transition: opacity 0.45s ease;
+}
+.work-track:has(article:hover) article:not(:hover) {
+  opacity: 0.45;
 }
 
 .outline-text {
@@ -288,5 +414,20 @@ body {
   .vel-stretch,
   .vel-skew {
     transform: none;
+  }
+  .spotlight,
+  .float-soft,
+  .pv-idle {
+    animation: none;
+  }
+  .caret {
+    animation: none;
+    opacity: 0;
+  }
+  .w-ch {
+    transition: none;
+  }
+  .menu-list li {
+    transition: none;
   }
 }

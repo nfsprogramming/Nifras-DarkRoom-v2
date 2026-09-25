@@ -17,6 +17,8 @@ export default function Spotlight() {
     let raf = 0;
     const loop = () => {
       raf = requestAnimationFrame(loop);
+      if (Math.abs(target.x - cur.x) < 0.4 && Math.abs(target.y - cur.y) < 0.4)
+        return;
       cur.x += (target.x - cur.x) * 0.07;
       cur.y += (target.y - cur.y) * 0.07;
       document.documentElement.style.setProperty("--mx", `${cur.x}px`);

@@ -39,7 +39,11 @@ void main(){
   gl_FragColor=vec4(col,1.);
 }`;
 
-export default function HeroCanvas() {
+export default function HeroCanvas({
+  boost,
+}: {
+  boost?: { current: { p: number } };
+}) {
   const ref = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
@@ -116,7 +120,10 @@ export default function HeroCanvas() {
       mouse.y += (mouse.ty - mouse.y) * 0.05;
       const intTarget = Math.min(
         1,
-        0.25 + Math.abs(getVelocity()) / 90 + (Math.abs(mouse.tx) + Math.abs(mouse.ty)) * 0.25
+        0.25 +
+          Math.abs(getVelocity()) / 90 +
+          (Math.abs(mouse.tx) + Math.abs(mouse.ty)) * 0.25 +
+          (boost?.current?.p ?? 0) * 0.6
       );
       intCur += (intTarget - intCur) * 0.04;
       gl.uniform2f(uRes, canvas.width, canvas.height);

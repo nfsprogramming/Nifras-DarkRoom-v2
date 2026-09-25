@@ -5,10 +5,11 @@ import { useReducedMotion } from "../hooks/useReducedMotion";
 const STATES: Record<string, { scale: number; label: string }> = {
   hover: { scale: 1.6, label: "" },
   open: { scale: 2.6, label: "OPEN" },
-  view: { scale: 2.2, label: "VIEW" },
+  view: { scale: 2.6, label: "VIEW" },
+  explore: { scale: 2.2, label: "EXPLORE" },
   link: { scale: 1.9, label: "\u2197" },
   drag: { scale: 2.3, label: "DRAG" },
-  cta: { scale: 3.1, label: "\u2197" },
+  cta: { scale: 3.1, label: "\u2192" },
 };
 const DEFAULT = { scale: 1, label: "" };
 
@@ -16,6 +17,7 @@ export default function Cursor() {
   const dotRef = useRef<HTMLDivElement>(null);
   const ringRef = useRef<HTMLDivElement>(null);
   const labelRef = useRef<HTMLSpanElement>(null);
+  const pulseRef = useRef<HTMLDivElement>(null);
   const reduced = useReducedMotion();
 
   useEffect(() => {
@@ -23,9 +25,10 @@ export default function Cursor() {
     const dot = dotRef.current;
     const ring = ringRef.current;
     const label = labelRef.current;
-    if (!dot || !ring || !label) return;
+    const pulse = pulseRef.current;
+    if (!dot || !ring || !label || !pulse) return;
 
-    gsap.set([dot, ring], { xPercent: -50, yPercent: -50, x: -100, y: -100 });
+    gsap.set([dot, ring, pulse], { xPercent: -50, yPercent: -50, x: -100, y: -100 });
     const dx = gsap.quickTo(dot, "x", { duration: 0.1, ease: "power2.out" });
     const dy = gsap.quickTo(dot, "y", { duration: 0.1, ease: "power2.out" });
     const rx = gsap.quickTo(ring, "x", { duration: 0.5, ease: "power3.out" });
@@ -44,17 +47,27 @@ export default function Cursor() {
       if (key === current) return;
       current = key;
       const cfg = key ? STATES[key] ?? STATES.hover : DEFAULT;
-      gsap.to(ring, { scale: cfg.scale, duration: 0.5, ease: "elastic.out(1, 0.45)" });
-      gsap.to(dot, { scale: key ? 0.4 : 1, duration: 0.3 });
+      gsap.to(ring, { scale: cfg.scale, duration: 0.45, ease: "power3.out" });
+      gsap.to(dot, { scale: key ? 0.4 : 1, duration: 0.25, ease: "power2.out" });
       label.textContent = cfg.label;
       gsap.to(label, { autoAlpha: cfg.label ? 1 : 0, duration: 0.2 });
+    };
+    const down = (e: MouseEvent) => {
+      gsap.set(pulse, { x: e.clientX, y: e.clientY });
+      gsap.fromTo(
+        pulse,
+        { scale: 0.3, autoAlpha: 0.6 },
+        { scale: 2.4, autoAlpha: 0, duration: 0.5, ease: "power2.out" }
+      );
     };
 
     window.addEventListener("mousemove", move);
     window.addEventListener("mouseover", over);
+    window.addEventListener("mousedown", down);
     return () => {
       window.removeEventListener("mousemove", move);
       window.removeEventListener("mouseover", over);
+      window.removeEventListener("mousedown", down);
     };
   }, [reduced]);
 
@@ -65,6 +78,10 @@ export default function Cursor() {
       aria-hidden
       className="pointer-events-none fixed inset-0 z-[120] hidden [@media(pointer:fine)]:block"
     >
+      <div
+        ref={pulseRef}
+        className="absolute left-0 top-0 h-10 w-10 rounded-full border border-[var(--accent)] opacity-0"
+      />
       <div
         ref={ringRef}
         className="absolute left-0 top-0 flex h-10 w-10 items-center justify-center rounded-full border border-[#f5f5f5] mix-blend-difference"

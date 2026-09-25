@@ -1,11 +1,12 @@
-import { useRef } from "react";
-import { scrollToTarget } from "../lib/scroll";
+import { useEffect, useRef } from "react";
+import Magnetic from "./Magnetic";
+import { scrollToTarget, getVelocity } from "../lib/scroll";
 import { burst } from "../lib/glitch";
 
 export const MENU_LINKS = [
-  { n: "01", label: "WORK", href: "#work" },
-  { n: "02", label: "ABOUT", href: "#about" },
-  { n: "03", label: "STACK", href: "#stack" },
+  { n: "01", label: "WHO I AM", href: "#intro" },
+  { n: "02", label: "WORK", href: "#work" },
+  { n: "03", label: "LAB", href: "#lab" },
   { n: "04", label: "CONTACT", href: "#contact" },
 ];
 
@@ -16,6 +17,17 @@ interface Props {
 
 export default function Nav({ menuOpen, onToggleMenu }: Props) {
   const logoRef = useRef<HTMLButtonElement>(null);
+
+  useEffect(() => {
+    let last = 0;
+    const id = window.setInterval(() => {
+      if (Math.abs(getVelocity()) > 45 && Date.now() - last > 1400) {
+        last = Date.now();
+        burst(logoRef.current);
+      }
+    }, 250);
+    return () => window.clearInterval(id);
+  }, []);
 
   return (
     <header className="fixed inset-x-0 top-0 z-[90] mix-blend-difference">
@@ -42,22 +54,24 @@ export default function Nav({ menuOpen, onToggleMenu }: Props) {
             </li>
           ))}
         </ul>
-        <button
-          onClick={onToggleMenu}
-          data-cursor
-          aria-expanded={menuOpen}
-          className="flex items-center gap-3 font-mono text-[11px] tracking-[0.3em]"
-        >
-          <span className="hidden sm:inline">{menuOpen ? "CLOSE" : "MENU"}</span>
-          <span className="flex flex-col gap-1.5">
-            <span
-              className={`h-px w-7 bg-white transition-transform duration-300 ${menuOpen ? "translate-y-[3px] rotate-45" : ""}`}
-            />
-            <span
-              className={`h-px w-7 bg-white transition-transform duration-300 ${menuOpen ? "-translate-y-[3px] -rotate-45" : ""}`}
-            />
-          </span>
-        </button>
+        <Magnetic strength={0.2}>
+          <button
+            onClick={onToggleMenu}
+            data-cursor
+            aria-expanded={menuOpen}
+            className="flex items-center gap-3 font-mono text-[11px] tracking-[0.3em]"
+          >
+            <span className="hidden sm:inline">{menuOpen ? "CLOSE" : "MENU"}</span>
+            <span className="flex flex-col gap-1.5">
+              <span
+                className={`h-px w-7 bg-white transition-transform duration-300 ${menuOpen ? "translate-y-[3px] rotate-45" : ""}`}
+              />
+              <span
+                className={`h-px w-7 bg-white transition-transform duration-300 ${menuOpen ? "-translate-y-[3px] -rotate-45" : ""}`}
+              />
+            </span>
+          </button>
+        </Magnetic>
       </nav>
     </header>
   );
